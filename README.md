@@ -171,4 +171,4 @@ See [COPYRIGHT.md](COPYRIGHT.md) for copyright and licensing information.
 
 ---
 
-_This repository is a technical showcase, not an open-source release of the Fergie Time application._
+_This repository is a technical showcase, not an open-source release of the Fergie Time game application._
