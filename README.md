@@ -1,6 +1,6 @@
 # Fergie Time: Premier League Football Analytics & Decision Simulation
 
-**An interactive Premier League decision-simulation project exploring tactical choices, Monte Carlo methods, and historical model evaluation.**
+**An interactive Premier League decision-simulation game exploring tactical choices, Monte Carlo methods, and historical model evaluation.**
 
 [**Play Fergie Time**](https://fergie-time.pages.dev/)
 
