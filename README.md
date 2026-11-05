@@ -77,13 +77,13 @@ A central design principle is to distinguish observed match history from simulat
 
 - Historical events establish what actually happened.
 - The simulation estimates possible continuations from a historical match state.
-- A simulated outcome is not presented as an observed historical event.
+- Simulated outcomes are not presented as observed historical events.
 
-The original evaluation did not produce a universal pass across all seasons. The pooled historical evaluation identified discrepancies in multiple match-situation groups. The two most recent seasons used by the production daily pool passed the documented gate, while older seasons did not consistently satisfy it.
+The original evaluation identified discrepancies across multiple historical match-situation groups. The two most recent seasons used by the production daily pool passed the documented evaluation gate, while older seasons did not consistently satisfy it.
 
-The separate ten-season practice-pool report also recorded 11 evaluation cells outside its gate-v2 limits.
+A later experimental calibration investigated whether era-specific parameters could improve performance across older seasons. Although it improved some diagnostics, it failed its predeclared validation criteria and was not promoted to production. The shipped engine remains unchanged.
 
-These limitations matter. A reasonable aggregate score does not establish that a model is reliable across every season or match situation.
+These results matter: passing an aggregate metric does not establish that a model is reliable across every season or match situation.
 
 See [Evaluation and Historical Diagnostics](docs/evaluation.md) for details.
 
@@ -103,7 +103,7 @@ fergie-time-analytics/
 │   └── common-random-numbers.py
 ├── results/                             # Selected historical descriptive statistics
 │   └── historical-season-summary.csv
-└── assets/                              # Diagrams and application screenshots
+└── assets/                              # Analytical diagrams and gameplay screenshots
     ├── architecture.mmd
     ├── simulation-workflow.mmd
     ├── architecture.png
@@ -159,11 +159,22 @@ See [Limitations and Scope](docs/limitations.md).
 - [Technical writing](https://chizkidd.github.io/)
 - [Sports writing](https://chizobao.substack.com)
 
-## Data and attribution
+## Data sources and attribution
 
-The original application credits its underlying data sources in the application and its documentation. This showcase does not redistribute the original match-event dataset.
+The production application uses historical football data and supporting player metadata from external sources:
 
-Before redistributing or reusing any third-party data, assets, or derived materials, consult the relevant provider's terms and attribution requirements. The presence of a derived statistic in this repository does not grant rights to the underlying source data.
+| Source | Data used |
+|---|---|
+| [Understat](https://understat.com/) | Match results, shots, expected goals (xG), and player participation across the historical dataset. |
+| [FPL Core Insights](https://github.com/olbauday/FPL-Core-Insights) | Named benches and shirt numbers for the 2025/26 season. |
+| [balldontlie](https://balldontlie.io/) | Player shirt numbers. |
+| [FotMob](https://www.fotmob.com/) | Appears to be an upstream source for some FPL Core Insights data; this application does not query FotMob directly. |
+
+The production application prepares its data before publication. Visitors receive preprocessed data files from the application rather than querying these providers directly. The production application therefore distributes source-derived data, not merely references to external websites.
+
+This repo does not include the underlying raw match-event files. Its `historical-season-summary.csv` contains selected season-level descriptive statistics reported in the original project documentation. It does not provide the underlying match-level data or a standalone script to regenerate those statistics.
+
+Source identification and attribution do not establish permission to reuse or redistribute third-party data. Commercial use, automated collection, and redistribution rights have not been independently verified for every source. Consult the providers' terms before reusing or redistributing their data.
 
 ## Copyright and licensing
 
