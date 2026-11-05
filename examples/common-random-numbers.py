@@ -1,19 +1,23 @@
 """
 Common random numbers: an illustrative paired simulation.
-- Why paired simulation can make comparisons between decisions more precise.
 
-The two hypothetical decisions are evaluated using the same
-uniform random numbers for each simulation index.
-
-This creates paired outcomes and allows the comparison to use
-the standard error of the paired differences.
+Demonstrates:
+- Why paired simulation can improve comparisons between decisions.
+- How common random numbers create paired outcomes.
+- How to calculate the standard error of paired differences.
+- How paired and independent comparisons can differ in precision.
 
 Uses illustrative probabilities, not production Fergie Time parameters.
 
-Note: This illustration uses a deliberately simplified categorical outcome model. 
-In a real simulation, the shared random tape must be consumed consistently by the 
-candidate policies for the pairing to be meaningful. The variance reduction is not 
-guaranteed for every model or every pair of decisions.
+This is a simplified categorical example. In a real simulation, shared
+random inputs must be consumed consistently by candidate policies for
+the pairing to be meaningful.
+
+Variance reduction is not guaranteed for every model or every pair
+of decisions.
+
+This version includes probability validation and guards 
+against division by zero when reporting the standard-error ratio.
 """
 
 import numpy as np
@@ -22,12 +26,31 @@ import numpy as np
 N_SIMULATIONS = 100_000
 SEED = 42
 
-# Illustrative win/draw/loss probabilities.
+# Outcome order: win, draw, loss.
 DECISION_A = np.array([0.35, 0.40, 0.25])
 DECISION_B = np.array([0.40, 0.32, 0.28])
 
 # Expected-points scoring.
 OUTCOME_POINTS = np.array([3.0, 1.0, 0.0])
+
+
+def validate_probabilities(probabilities):
+    """Check that probabilities form a valid categorical distribution."""
+    probabilities = np.asarray(probabilities, dtype=float)
+
+    if probabilities.shape != (3,):
+        raise ValueError("Expected exactly three probabilities: win, draw, loss.")
+
+    if not np.all(np.isfinite(probabilities)):
+        raise ValueError("Probabilities must be finite.")
+
+    if np.any(probabilities < 0):
+        raise ValueError("Probabilities cannot be negative.")
+
+    if not np.isclose(probabilities.sum(), 1.0):
+        raise ValueError("Probabilities must sum to 1.")
+
+    return probabilities
 
 
 def sample_points(uniforms, probabilities):
@@ -39,13 +62,10 @@ def sample_points(uniforms, probabilities):
         [p_win, p_win + p_draw)     -> draw
         remaining interval          -> loss
     """
-    if not np.isclose(probabilities.sum(), 1.0):
-        raise ValueError("Probabilities must sum to 1.")
-
-    cumulative = np.cumsum(probabilities)
+    probabilities = validate_probabilities(probabilities)
 
     outcomes = np.searchsorted(
-        cumulative,
+        np.cumsum(probabilities),
         uniforms,
         side="right",
     )
@@ -54,6 +74,12 @@ def sample_points(uniforms, probabilities):
 
 
 def summarize(values):
+    """Return the sample mean and standard error."""
+    values = np.asarray(values, dtype=float)
+
+    if values.ndim != 1 or len(values) < 2:
+        raise ValueError("At least two one-dimensional observations are required.")
+
     return {
         "mean": values.mean(),
         "standard_error": values.std(ddof=1) / np.sqrt(len(values)),
@@ -70,17 +96,18 @@ def main():
     points_b = sample_points(shared_uniforms, DECISION_B)
 
     # Paired comparison.
-    differences = points_a - points_b
+    paired_differences = points_a - points_b
+    paired_result = summarize(paired_differences)
 
     result_a = summarize(points_a)
     result_b = summarize(points_b)
-    paired_result = summarize(differences)
 
-    # Independent sampling as a comparison.
+    # Independent sampling comparison.
     independent_a = sample_points(
         rng.random(N_SIMULATIONS),
         DECISION_A,
     )
+
     independent_b = sample_points(
         rng.random(N_SIMULATIONS),
         DECISION_B,
@@ -105,14 +132,37 @@ def main():
     print(f"  Difference A - B: {independent_result['mean']:.4f}")
     print(f"  Standard error:   {independent_result['standard_error']:.5f}")
 
-    print("\nVariance reduction")
-    ratio = (
-        independent_result["standard_error"]
-        / paired_result["standard_error"]
-    )
+    paired_se = paired_result["standard_error"]
+    independent_se = independent_result["standard_error"]
 
-    print(f"  Independent SE / paired SE: {ratio:.2f}x")
+    print("\nStandard-error comparison")
+
+    if paired_se == 0:
+        print("  Paired standard error is zero; ratio is undefined.")
+    else:
+        ratio = independent_se / paired_se
+        print(f"  Independent SE / paired SE: {ratio:.2f}x")
 
 
 if __name__ == "__main__":
     main()
+
+# SOLUTION:
+# Simulations: 100,000
+
+# Decision A
+#   Expected points: 1.4475
+
+# Decision B
+#   Expected points: 1.5155
+
+# Paired comparison using common random numbers
+#   Difference A - B: -0.0680
+#   Standard error:   0.00149
+
+# Independent comparison
+#   Difference A - B: -0.0634
+#   Standard error:   0.00552
+
+# Standard-error comparison
+#   Independent SE / paired SE: 3.70x

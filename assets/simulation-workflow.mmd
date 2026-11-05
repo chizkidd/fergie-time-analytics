@@ -1,13 +1,13 @@
 flowchart TD
     A["Historical match state"] --> B["Select candidate decisions"]
-    B --> C["Generate shared random tapes"]
+    B --> C["Generate shared random inputs"]
     C --> D["Simulate each candidate"]
     D --> E["Collect win/draw/loss outcomes"]
     E --> F["Calculate expected points"]
     F --> G["Calculate paired differences"]
     G --> H["Estimate standard errors"]
     H --> I{"Difference distinguishable?"}
-    I -->|No| J["Treat options as tied"]
+    I -->|No| J["Treat options as statistically tied"]
     I -->|Yes| K["Quantify decision trade-off"]
     J --> L["Decision report"]
     K --> L

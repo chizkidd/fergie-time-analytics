@@ -1,138 +1,127 @@
 # Fergie Time: Premier League Football Analytics & Decision Simulation
 
-**An interactive Premier League tactical decision game built around historical match-event data, Monte Carlo simulation, and model evaluation.**
+**An interactive Premier League decision-simulation project exploring tactical choices, Monte Carlo methods, and historical model evaluation.**
 
-> [**Play Fergie Time**](https://fergie-time.pages.dev/)
+[**Play Fergie Time**](https://fergie-time.pages.dev/)
 
-Fergie Time puts you in charge of a real Premier League match during its closing stages. You make tactical decisions, simulate their possible consequences, and receive an evaluation of each decision based on expected points and outcome probabilities.
+Fergie Time puts you in charge of a real Premier League match during its closing stages. You make tactical decisions, simulate their possible consequences, and compare options using expected points, outcome probabilities, and uncertainty estimates.
 
-This repository is a public technical showcase of the analytical methods, evaluation approach, and selected reproducible examples behind the project. It is not the application source code or a reproduction of the production simulation engine.
+This repository is a public technical showcase of selected analytical methods, evaluation findings, and reproducible examples. It does not contain the production application source code or the proprietary simulation engine.
 
-## Application/Game preview
+
+## Application preview
 
 ![Fergie Time match interface](assets/fergie-time-gameplay.png)
 
 ## Simulation workflow
 
-<!-- ![Simulation workflow](assets/simulation-workflow.png) -->
+![Simulation workflow](assets/simulation-workflow.png)
 
-```mermaid
-flowchart TD
- A["Historical match state"] --> B["Select candidate decisions"]
- B --> C["Generate shared random tapes"]
- C --> D["Simulate each candidate"]
- D --> E["Collect win/draw/loss outcomes"]
- E --> F["Calculate expected points"]
- F --> G["Calculate paired differences"]
- G --> H["Estimate standard errors"]
- H --> I{"Difference distinguishable?"}
- I -->|No| J["Treat options as tied"]
- I -->|Yes| K["Quantify decision trade-off"]
- J --> L["Decision report"]
- K --> L
-```
+The workflow diagram is maintained in [`assets/simulation-workflow.mmd`](assets/simulation-workflow.mmd).
 
-## Project overview
+## The problem
 
-The project explores a practical decision problem:
+Given a football match's current state, how can we compare alternative tactical decisions when the eventual outcome is uncertain?
 
-> **Given a football match's current state, how can we compare alternative tactical decisions when the eventual outcome is uncertain?**
+A single simulated result is not enough. A useful comparison needs to account for the distribution of possible outcomes, the uncertainty in estimated differences, and the trade-offs between winning, drawing, and losing.
 
-The application uses historical Premier League match-event data, including match results, lineups, shots, shot locations, and player information.
+Fergie Time explores this problem using historical Premier League match-event data and Monte Carlo simulation.
 
-For each decision, the simulation evaluates alternative tactical options and reports:
+## What the application evaluates
+
+The application uses historical match-event information, including match results, lineups, shots, shot locations, and player information.
+
+For each legal tactical option, the simulation estimates:
 
 - Expected points, using 3 points for a win, 1 for a draw, and 0 for a loss.
 - Win, draw, and loss probabilities.
-- Outcome variance and risk.
-- The difference between the selected option and the strongest available alternative.
-- Whether the estimated difference is sufficiently large to distinguish the options.
+- Outcome variability and risk.
+- Differences between candidate decisions.
+- Whether estimated differences are distinguishable from simulation noise.
 
-Each legal option is evaluated using 1,000 simulations.
+The production application is documented as evaluating each legal option with 1,000 simulations.
 
-## Analytical approach
+## Analytical methods
 
-The project brings together several ideas:
+The project brings together several statistical and engineering ideas:
 
-1. **Monte Carlo simulation:** Estimate the distribution of possible outcomes under alternative tactical decisions.
-2. **Paired simulation:** Use common random numbers so candidate decisions experience the same underlying random draws, reducing noise in comparisons.
-3. **Uncertainty-aware evaluation:** Use paired standard errors and explicit tie bands rather than treating every numerical difference as meaningful.
-4. **Multi-objective reporting:** Show expected points alongside win/draw/loss probabilities and risk.
-5. **Historical backtesting:** Compare simulated continuations against what actually happened in historical match situations.
-6. **Data-quality and model diagnostics:** Examine performance across match situations and seasons rather than relying only on aggregate metrics.
+1. **Monte Carlo simulation:** Repeatedly simulate possible match continuations to estimate outcome distributions.
+2. **Common random numbers:** Use shared random inputs across candidate decisions to reduce noise in paired comparisons when the resulting outcomes are positively correlated.
+3. **Uncertainty-aware comparison:** Estimate the uncertainty of paired differences rather than treating every numerical ranking as meaningful.
+4. **Multi-objective reporting:** Present expected points alongside win, draw, and loss probabilities.
+5. **Historical backtesting:** Compare simulated continuations with observed historical match outcomes.
+6. **Population and temporal diagnostics:** Examine differences across match situations and seasons rather than relying exclusively on aggregate metrics.
 
 See the [simulation methodology](docs/simulation-methodology.md) and [evaluation notes](docs/evaluation.md).
 
-## Selected historical data diagnostics
+## Historical data diagnostics
 
-The underlying project examined 12 Premier League seasons, from 2014/15 through 2025/26:
+The original project documentation reports coverage across 12 Premier League seasons, from 2014/15 through 2025/26:
 
-- 4,560 matches
-- 116,004 shots
-- 12,599 match situations
-- The production daily pool uses the two most recent seasons.
+| Measure | Reported count |
+|---|---:|
+| Seasons | 12 |
+| Matches | 4,560 |
+| Shots | 116,004 |
+| Match situations | 12,599 |
 
-The historical data showed meaningful changes across seasons. For example, average last-shot timing, late-match shot volume, goals after the 90th minute, and substitution usage varied over time.
+The production daily pool uses the two most recent seasons. Older seasons are treated as practice scenarios.
 
-The included CSV contains selected season-level descriptive statistics from the original project documentation. These are descriptive data diagnostics, not model-performance scores.
+The historical data showed meaningful changes across seasons. Average last-shot timing, late-match shot volume, goals after the 90th minute, and substitution usage all varied over time.
+
+The included CSV contains selected season-level descriptive statistics summarized from the original project documentation. These are descriptive diagnostics, not model-performance scores.
 
 ## Evaluation and scientific integrity
 
 A central design principle is to distinguish observed match history from simulated counterfactual outcomes.
 
-The historical match provides the observed state and events. The simulation estimates what might happen under alternative decisions. A simulated outcome is never presented as something that actually happened.
+- Historical events establish what actually happened.
+- The simulation estimates possible continuations from a historical match state.
+- A simulated outcome is not presented as an observed historical event.
 
-The original evaluation work also exposed weaknesses. In particular, the historical backtest did not pass every evaluation gate across all older seasons. The two seasons used by the shipped daily pool passed the documented gate, while older seasons showed systematic discrepancies. These findings informed the decision to distinguish the daily pool from older practice scenarios.
+The original evaluation did not produce a universal pass across all seasons. The pooled historical evaluation identified discrepancies in multiple match-situation groups. The two most recent seasons used by the production daily pool passed the documented gate, while older seasons did not consistently satisfy it.
 
-The [evaluation document](docs/evaluation.md) describes the scope and limitations of these results.
+The separate ten-season practice-pool report also recorded 11 evaluation cells outside its gate-v2 limits.
 
-## Folder structure
+These limitations matter. A reasonable aggregate score does not establish that a model is reliable across every season or match situation.
 
-```bash
+See [Evaluation and Historical Diagnostics](docs/evaluation.md) for details.
+
+## Repository structure
+
+```text
 fergie-time-analytics/
 ├── README.md
+├── COPYRIGHT.md
 ├── docs/
 │   ├── architecture.md
 │   ├── simulation-methodology.md
 │   ├── evaluation.md
 │   └── limitations.md
-├── examples/
+├── examples/                            # Standalone Python demonstrations using synthetic data
 │   ├── monte-carlo-simulation.py
 │   └── common-random-numbers.py
-├── results/
+├── results/                             # Selected historical descriptive statistics
 │   └── historical-season-summary.csv
-└── assets/
+└── assets/                              # Diagrams and application screenshots
     ├── architecture.mmd
     ├── simulation-workflow.mmd
     ├── architecture.png
     ├── simulation-workflow.png
-    └── *.png
-
+    └── fergie-time-gameplay.png
 ```
-
-## Repository contents
-
-| Path | Purpose |
-|---|---|
-| `docs/architecture.md` | High-level system architecture |
-| `docs/simulation-methodology.md` | Monte Carlo, paired comparisons, and uncertainty |
-| `docs/evaluation.md` | Historical evaluation and diagnostics |
-| `docs/limitations.md` | Data and modeling limitations |
-| `examples/` | Standalone Python demonstrations using synthetic data |
-| `results/` | Selected historical descriptive statistics |
-| `assets/` | Diagrams and application screenshots |
 
 ## Reproducible examples
 
-The Python examples are independent educational demonstrations. They use synthetic probabilities and do not contain the proprietary Fergie Time engine or production data.
+The Python examples are independent educational demonstrations. They use synthetic outcome probabilities and do not contain the production simulation engine or proprietary production data.
 
-Requirements:
+Install the dependency:
 
 ```bash
 python -m pip install numpy
 ```
 
-Run:
+Run the examples:
 
 ```bash
 python examples/monte-carlo-simulation.py
@@ -150,33 +139,43 @@ The production application uses:
 - Web Workers
 - Playwright for browser-level testing
 
-The public examples use Python and NumPy.
+The public statistical examples use Python and NumPy.
 
 ## Development approach
 
-I led the product conception, problem formulation, analytical methodology, architecture, and evaluation strategy. I used Claude Code as an AI-assisted implementation tool, directing development, reviewing generated changes, testing behavior, and iterating on the system.
+I led the product conception, problem formulation, analytical methodology, architecture, and evaluation strategy.
 
-The analytical decisions, validation criteria, and interpretation of results were under my direction.
+I used Claude Code as an AI-assisted implementation tool, directing development, reviewing generated changes, testing behavior, and iterating on the application.
 
-## Important scope note
+The project involved defining the analytical problem, choosing the statistical approach, establishing evaluation criteria, interpreting results, and reviewing the resulting implementation. I aim to describe that contribution accurately rather than imply that every line of application code was manually written.
 
-This project uses historical match-event data. It does not use optical player-tracking data, GPS tracking, or measured player coordinates.
+## Scope and limitations
 
-The pitch visualizations are schematic representations of player roles and tactical instructions, not observed player positions.
+Fergie Time uses historical match-event data. It does **not** use optical player-tracking data, GPS tracking, or measured player coordinates.
+
+The pitch visualizations are schematic representations of tactical arrangements and player roles, not observed player positions. Ball position is derived from the game state rather than measured from tracking data.
+
+The application is an interactive decision-simulation project. It is not a professional recruitment model, a player-tracking analytics platform, or a substitute for coaching judgment.
+
+See [Limitations and Scope](docs/limitations.md).
 
 ## Links
 
 - [Live application](https://fergie-time.pages.dev/)
-- [Technical Writing](https://chizkidd.github.io/)
-- [Sports Writing](https://chizobao.substack.com)
+- [GitHub profile](https://github.com/chizkidd)
+- [Technical writing](https://chizkidd.github.io/)
+- [Sports writing](https://chizobao.substack.com)
 
 ## Data and attribution
 
 The original application credits its underlying data sources in the application and its documentation. This showcase does not redistribute the original match-event dataset.
 
-Historical statistics included here are summaries from the project's internal evaluation documentation. They are provided to explain the analytical work, not as a downloadable copy of the source data.
+Before redistributing or reusing any third-party data, assets, or derived materials, consult the relevant provider's terms and attribution requirements. The presence of a derived statistic in this repository does not grant rights to the underlying source data.
+
+## Copyright and licensing
+
+See [COPYRIGHT.md](COPYRIGHT.md) for copyright and licensing information.
 
 ---
 
 _This repository is a technical showcase, not an open-source release of the Fergie Time application._
-

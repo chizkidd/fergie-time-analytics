@@ -1,42 +1,78 @@
-
 # Simulation Methodology
 
-## Problem formulation
+## 1. Problem formulation
 
-Given a match state and a set of legal tactical decisions, estimate the distribution of possible outcomes under each decision. The objective is to compare decisions under uncertainty rather than assume that one simulated outcome is representative of what would happen.
-
-## Monte Carlo simulation
-
-For a candidate decision, the engine simulates the remainder of the match repeatedly. Each simulation produces a possible outcome:
+Given a match state and a set of legal tactical decisions, let's estimate the distribution of possible outcomes under each decision. The goal is to compare decisions under uncertainty rather than assume that one simulated outcome represents what would actually happen. Each candidate decision produces a distribution over:
 
 - Win
 - Draw
 - Loss
 
-Expected points are calculated as:
+## 2. Monte Carlo simulation
 
-$$[EP = 3P(W) + P(D)]$$
-
-where:
+Monte Carlo simulation estimates outcome probabilities by repeatedly sampling possible continuations. For a candidate decision, let's define:
 
 - $P(W)$ is the probability of winning.
 - $P(D)$ is the probability of drawing.
 - $P(L)$ is the probability of losing.
-- $\sum{P(W) + P(D) + P(L) = 1}$
 
-The application evaluates each legal option using 1,000 simulations.
+The outcome probabilities satisfy:
 
-## Common random numbers
+$$P(W) + P(D) + P(L) = 1$$
 
-A naive comparison might simulate each candidate decision using unrelated random draws. That introduces unnecessary Monte Carlo noise into the comparison. Instead, the application uses common random numbers: candidate decisions are evaluated using the same underlying random tape for each simulation index. This creates paired observations.
+Expected points are:
 
-For simulation ($i$), let:
+$$EP = 3P(W) + P(D)$$
+
+This follows the standard football points system: 
+* $3$ points for a win
+* $1$ point for a draw
+* $0$ point for a loss
+
+If $N$ simulations produce $N_W$ wins, $N_D$ draws, and $N_L$ losses, the estimated probabilities are:
+
+$$
+\begin{aligned}
+\widehat{P}(W) &= \frac{N_W}{N} \\
+\widehat{P}(D) &= \frac{N_D}{N} \\
+\widehat{P}(L) &= \frac{N_L}{N}
+\end{aligned}
+$$
+
+
+The estimated expected points are:
+
+$$
+\widehat{EP} = 3\widehat{P(W)} + \widehat{P(D)}
+$$
+
+The production application is documented as evaluating each legal option with 1,000 simulations. Monte Carlo estimates are approximations. Increasing the number of simulations generally reduces sampling error, but it does not correct a misspecified model or unrepresentative historical data.
+
+## 3. Comparing candidate decisions
+
+Suppose two candidate decisions, $A$ and $B$, produce estimated expected points:
+
+$$
+\widehat{EP}_A \quad \text{and} \quad \widehat{EP}_B
+$$
+
+Their estimated difference is:
+
+$$
+\widehat{\Delta} = \widehat{EP}_A - \widehat{EP}_B
+$$
+
+A positive value favors $A$ on expected points. A negative value favors $B$. However, the estimated difference is itself uncertain because both expected points estimates are based on finite simulations. A comparison should therefore consider the uncertainty of the difference, not just the difference in point estimates.
+
+## 4. Common random numbers
+
+A naive comparison may simulate candidate decisions using unrelated random draws. That can introduce unnecessary Monte Carlo noise into the difference between the estimates. Common random numbers (CRN) address this by using shared random inputs across candidate decisions. This creates paired simulation outcomes. For simulation $i$, let:
 
 $$X_i = \text{outcome under decision A} $$
 
 $$Y_i = \text{outcome under decision B}$$
 
-The comparison uses:
+The paired difference is:
 
 $$D_i = X_i - Y_i$$
 
@@ -44,41 +80,58 @@ The estimated difference is:
 
 $$\bar D = \frac{1}{N}\sum_{i=1}^{N}D_i$$
 
-Its standard error is:
+The standard error of the paired estimate is:
 
-$$SE(\bar D) = \frac{s_D}{\sqrt{N}}$$
+$$SE(\bar{D}) = \frac{s_D}{\sqrt{N}}$$
 
-where $s_D$ is the sample standard deviation of the paired differences. The purpose is to reduce variance in the comparison, not to make the underlying simulation itself more accurate.
+where $s_D$ is the sample standard deviation of the paired differences. The statistical reason CRN can help is:
 
-## Explicit tie bands
+$$
+\operatorname{Var}(X-Y) =
+\operatorname{Var}(X) +
+\operatorname{Var}(Y) -
+2\operatorname{Cov}(X,Y)
+$$
 
-A small estimated difference should not automatically imply that one decision is inferior. The application uses a paired uncertainty estimate to identify decisions that are statistically indistinguishable from the best available option. The documented convention is:
+When the shared random inputs induce positive covariance between the candidate outcomes, the variance of their difference can be smaller than it would be under independent simulation. This variance reduction is not guaranteed for every model or every pair of decisions. The random inputs must also be aligned meaningfully across candidates. If candidate policies consume random inputs inconsistently, the intended pairing may be weakened or invalidated. CRN reduces noise in a comparison. It does not make the underlying model more accurate.
 
-$$|\Delta| \leq 1.96 \times SE$$
+## 5. Uncertainty-aware rankings
 
-where $\Delta$ is the estimated difference from the best option and the standard error $(SE)$ is based on paired simulation results. The implementation uses a state-level band based on the widest paired standard error among legal calls. This avoids treating a noisy ranking as a meaningful distinction.
+A small numerical difference should not automatically imply that one decision is inferior. When the estimated difference is small relative to its uncertainty, the evidence may not support a meaningful ranking. A common approximate interval for a paired difference is:
 
-## Practical significance
+$$\bar{D} \pm 1.96 \times SE(\bar{D})$$
 
-Statistical uncertainty is not the only consideration. The application also uses a practical-significance floor:
+This is a normal-approximation interval. Its interpretation depends on the simulation design and the adequacy of the approximation. If the interval includes $0$, the observed difference is not clearly distinguishable from simulation noise at the corresponding approximate confidence level. That does not prove that the decisions are identical. It means the available simulation evidence does not clearly separate them. The production implementation uses its own state-level comparison and tie-handling logic. The exact implementation details are not reproduced here.
 
-- 0.02 expected points when grading on expected points.
-- 0.5 percentage points of win probability when grading on win probability.
+## 6. Statistical versus practical significance
 
-A decision inside the uncertainty band or below the practical-significance floor can be treated as equivalent to the best option.
+A difference can be statistically distinguishable yet too small to matter in practice. Conversely, a potentially meaningful difference may be estimated imprecisely. It is useful to distinguish between:
 
-## Multi-objective reporting
+- **Statistical uncertainty:** How much could the estimated difference vary because of finite simulation sampling?
+- **Practical significance:** Is the estimated difference large enough to matter for the decision?
 
-Expected points provide a common objective, but they do not communicate every trade-off. The report also exposes:
+The production application documents practical-significance thresholds for its decision grading. Those thresholds are implementation-specific and are not required to understand the general methodology.
 
+## 7. Multi-objective reporting
+
+Expected points provide a useful summary, but they do not capture every trade-off. For example, one decision may increase the chance of winning while also increasing the chance of losing. The application therefore reports several quantities:
+
+- Expected points
 - Win probability
 - Draw probability
 - Loss probability
-- Outcome variance
-- Stake per outcome
+- Outcome variability
+- Differences between candidate decisions
 
-This makes it possible to see when an option increases the chance of winning while also increasing the chance of losing.
+This makes the trade-off between a safer outcome distribution and a more volatile one easier to inspect.
 
-## Standalone examples
+## 8. Standalone examples
 
-The `examples/` directory contains independent Python demonstrations of Monte Carlo simulation and common random numbers. They use synthetic outcome probabilities. They illustrate the statistical ideas without reproducing the production engine.
+The `examples/` directory contains independent Python demonstrations of:
+
+- Monte Carlo estimation of win, draw, and loss probabilities.
+- Expected-points estimation and Monte Carlo standard error.
+- Paired comparisons using common random numbers.
+- Comparison with independent simulation.
+
+The examples use synthetic probabilities. They illustrate the statistical ideas without reproducing the production engine or its parameters.
