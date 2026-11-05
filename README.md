@@ -11,13 +11,9 @@ This repository is a public technical showcase of selected analytical methods, e
 
 ## Application preview
 
-![Fergie Time match interface](assets/fergie-time-gameplay.png)
+> **BEGINNING GAME STATE**
 
-## Simulation workflow
-
-![Simulation workflow](assets/simulation-workflow.png)
-
-The workflow diagram is maintained in [`assets/simulation-workflow.mmd`](assets/simulation-workflow.mmd).
+![Fergie Time match start interface](assets/gameplay.png)
 
 ## The problem
 
@@ -108,7 +104,9 @@ fergie-time-analytics/
     ├── simulation-workflow.mmd
     ├── architecture.png
     ├── simulation-workflow.png
-    └── fergie-time-gameplay.png
+    ├── gameplay.png
+    ├── gameplay-*.png
+    └── homepage-*.png
 ```
 
 ## Reproducible examples
@@ -179,6 +177,40 @@ Source identification and attribution do not establish permission to reuse or re
 ## Copyright and licensing
 
 See [COPYRIGHT.md](COPYRIGHT.md) for copyright and licensing information.
+
+## Simulation workflow 
+
+<img src="assets/simulation-workflow.png" alt="Simulation workflow" width="500">
+
+<!-- ![Simulation workflow](assets/simulation-workflow.png) -->
+
+The workflow diagram is maintained in [`assets/simulation-workflow.mmd`](assets/simulation-workflow.mmd).
+
+## Additional application preview
+
+> **FINAL GAME STATE**
+
+![Fergie Time gameplay end interface](assets/gameplay-DECISIONS-FULL.png)
+
+---
+
+> **CHOICES FOR A SINGLE GAME STATE**
+
+![Fergie Time gameplay single game state interface](assets/gameplay-DECISION-SINGLE-FULL.png)
+
+---
+
+> **FINAL PLAY-BY-PLAY REPORT**
+
+![Fergie Time match end play-by-play report](assets/gameplay-PLAY-BY-PLAY.png)
+
+---
+
+> **HOME PAGE**
+
+![Fergie Time Homepage](assets/homepage-FULL.png)
+
+
 
 ---
 
