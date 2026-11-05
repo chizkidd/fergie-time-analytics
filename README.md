@@ -141,13 +141,6 @@ The production application uses:
 
 The public statistical examples use Python and NumPy.
 
-## Development approach
-
-I led the product conception, problem formulation, analytical methodology, architecture, and evaluation strategy.
-
-I used Claude Code as an AI-assisted implementation tool, directing development, reviewing generated changes, testing behavior, and iterating on the application.
-
-The project involved defining the analytical problem, choosing the statistical approach, establishing evaluation criteria, interpreting results, and reviewing the resulting implementation. I aim to describe that contribution accurately rather than imply that every line of application code was manually written.
 
 ## Scope and limitations
 
