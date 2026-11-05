@@ -1,0 +1,15 @@
+flowchart TD
+    A["Historical match-event data"] --> B["Scenario construction"]
+    B --> C["Observed match state"]
+    C --> D["Candidate tactical decisions"]
+    D --> E["Simulation engine"]
+    E --> F["Outcome distributions"]
+    F --> G["Decision evaluation"]
+    G --> H["Uncertainty-aware comparison"]
+    H --> I["Decision report"]
+    I --> J["Interactive application"]
+
+    K["Historical match results"] --> L["Backtesting"]
+    E --> L
+    L --> M["Model diagnostics"]
+    M --> G
